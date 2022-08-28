@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SlackApp-JiraHermes
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  Slack:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: main
+      Runtime: go1.x
+      Architectures: # Runtime go1.x does not support the following architectures [arm64]
+        - x86_64
+      Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
+      Events:
+        CloudWatchEvent:
+          Type: Schedule
+          Properties:
+            Schedule: cron(50 00 ? * MON-FRI *)
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          BASE_URL: '{{resolve:secretsmanager:slack-apps/jira-hermes:SecretString:BASE_URL}}'
+          USERNAME: '{{resolve:secretsmanager:slack-apps/jira-hermes:SecretString:USERNAME}}'
+          PASSWORD: '{{resolve:secretsmanager:slack-apps/jira-hermes:SecretString:PASSWORD}}'
+          SLACK_TOKEN: '{{resolve:secretsmanager:slack-apps/jira-hermes:SecretString:SLACK_TOKEN}}'
+          SLACK_CHANNEL_ID: '{{resolve:secretsmanager:slack-apps/jira-hermes:SecretString:SLACK_CHANNEL_ID}}'
